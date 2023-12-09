@@ -1,6 +1,6 @@
 use std::{fs, str::FromStr};
 
-use iter_tools::Itertools;
+use itertools::Itertools;
 
 fn main() {
     let input = fs::read_to_string("input/day06/day06.txt").unwrap();

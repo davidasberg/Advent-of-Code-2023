@@ -6,7 +6,7 @@ use std::{
     str::FromStr,
 };
 
-use iter_tools::Itertools;
+use itertools::Itertools;
 
 fn main() {
     let input = fs::read_to_string("input/day05/day05.txt").expect("Unable to read file");
