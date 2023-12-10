@@ -7,6 +7,7 @@ fn main() {
     let part1 = sequences
         .iter()
         .map(|sequence| sequence.get_next_value())
+        .filter(|&x| x != 0)
         .sum::<i64>();
     println!("Part 1: {}", part1);
 
@@ -16,6 +17,7 @@ fn main() {
             values: sequence.values.iter().rev().cloned().collect(),
         })
         .collect::<Vec<Sequence>>();
+
     let part2 = reversed_sequences
         .iter()
         .map(|sequence| sequence.get_next_value())
