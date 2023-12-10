@@ -1,11 +1,12 @@
 use std::{
     collections::{HashMap, HashSet, VecDeque},
     fs,
+    ops::Range,
     str::FromStr,
 };
 
 fn main() {
-    let input = fs::read_to_string("input/day10/day10_ex3.txt").expect("Unable to read file");
+    let input = fs::read_to_string("input/day10/day10.txt").expect("Unable to read file");
     let mut map = read_input(&input);
     let starting_point = map.starting_point;
     // let part1 = map.farthest_distance_from_starting_point(starting_point);
@@ -51,7 +52,7 @@ impl Map {
     fn get_all_pipe_distances(
         &mut self,
         starting_point: (usize, usize),
-    ) -> HashMap<(usize, usize), i32> {
+    ) -> HashMap<((usize, usize), Tile), i32> {
         // determine type of tile starting point is on
         let starting_tile = determine_tile(
             self.get_tile(starting_point.0 as isize, starting_point.1 as isize - 1),
@@ -68,7 +69,7 @@ impl Map {
 
         visited.insert(starting_point);
         queue.push_back((starting_point, 0));
-        distances.insert(starting_point, 0);
+        distances.insert((starting_point, starting_tile), 0);
 
         while let Some(((x, y), distance)) = queue.pop_front() {
             let tile = self.get_tile(x as isize, y as isize);
@@ -87,7 +88,7 @@ impl Map {
                 }
 
                 visited.insert(neighbour);
-                distances.insert(neighbour, distance + 1);
+                distances.insert((neighbour, neighbour_tile), distance + 1);
                 queue.push_back((neighbour, distance + 1));
             }
         }
@@ -113,58 +114,46 @@ impl Map {
     }
 
     fn interior_area(&mut self, starting_point: (usize, usize)) -> u32 {
-        let pipes = self
-            .get_all_pipe_distances(starting_point)
+        let pipes_distances = self.get_all_pipe_distances(starting_point);
+        let pipes = pipes_distances
             .iter()
-            .map(|(p, _)| *p)
-            .collect::<HashSet<_>>();
+            .map(|((p, _), _)| *p)
+            .collect::<HashSet<(usize, usize)>>();
 
-        // each row should have a multiple of 2 pipes
-        // split this into pairs, and take the distance between them
         let mut area = 0;
         for row in 0..self.tiles.len() {
-            let mut pipes_in_row = pipes
-                .iter()
-                .filter(|(_, y)| *y == row)
-                .map(|(x, y)| (*x, *y))
-                .collect::<Vec<_>>();
-
-            // now filter those that have at most 1 of the pipes next to them (left or right)
-            // pipes_in_row = pipes_in_row
-            //     .into_iter()
-            //     .filter(|p| {
-            //         let left = usize::try_from(p.0 as isize - 1);
-            //         let right = usize::try_from(p.0 as isize + 1);
-
-            //         let left_is_pipe = left.map(|l| pipes.contains(&(l, p.1))).unwrap_or(false);
-            //         let right_is_pipe = right.map(|r| pipes.contains(&(r, p.1))).unwrap_or(false);
-
-            //         if left_is_pipe && right_is_pipe {
-            //             return false;
-            //         }
-            //         true
-            //     })
-            //     .collect::<Vec<_>>();
-
-            if pipes_in_row.len() == 0 {
-                continue;
-            }
-
-            let mut pipes_x = pipes_in_row.iter().map(|(x, _)| *x).collect::<Vec<_>>();
-            pipes_x.sort_by(|a, b| a.cmp(b));
-
-            if pipes_x.len() % 2 != 0 {
-                // remove middle element
-                let middle = pipes_x.len() / 2;
-                dbg!(pipes_x[middle]);
-                // pipes_x.insert(middle, pipes_x[middle]);
-            }
-
-            dbg!(&pipes_x);
-
-            for pair in pipes_x.chunks(2) {
-                println!("subtracted {} from {}", pair[0], pair[1]);
-                area += pair[1] as u32 - pair[0] as u32 - 1;
+            println!("ROW {} ======================", row);
+            let mut crossings = 0;
+            let mut prev_corner = None;
+            for col in 0..self.tiles[0].len() {
+                let p = (col, row);
+                if pipes.contains(&p) {
+                    let tile = self.get_tile(col as isize, row as isize);
+                    match tile {
+                        Tile::Vertical => crossings += 1,
+                        Tile::SouthWest => {
+                            if prev_corner == Some(Tile::NorthEast) {
+                                crossings += 1;
+                            }
+                        }
+                        Tile::NorthWest => {
+                            if prev_corner == Some(Tile::SouthEast) {
+                                crossings += 1;
+                            }
+                        }
+                        Tile::StartingPoint => {
+                            crossings += 1;
+                        }
+                        _ => {}
+                    }
+                    if tile != Tile::Horizontal {
+                        prev_corner = Some(tile);
+                    }
+                } else {
+                    if crossings % 2 == 1 {
+                        area += 1;
+                    }
+                }
             }
         }
 
