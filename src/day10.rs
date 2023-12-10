@@ -5,14 +5,14 @@ use std::{
 };
 
 fn main() {
-    let input = fs::read_to_string("input/day10/day10.txt").expect("Unable to read file");
+    let input = fs::read_to_string("input/day10/day10_ex3.txt").expect("Unable to read file");
     let mut map = read_input(&input);
     let starting_point = map.starting_point;
     // let part1 = map.farthest_distance_from_starting_point(starting_point);
     // println!("Part 1: {}", part1);
 
     let part2 = map.interior_area(starting_point);
-    println!("Part 2: {}", part2 - 1);
+    println!("Part 2: {}", part2);
 }
 
 fn read_input(input: &str) -> Map {
@@ -150,18 +150,20 @@ impl Map {
                 continue;
             }
 
-            if pipes_in_row.len() % 2 != 0 {
-                // remove the middle pipe
-                let middle = pipes_in_row.len() / 2;
-                pipes_in_row.remove(middle);
+            let mut pipes_x = pipes_in_row.iter().map(|(x, _)| *x).collect::<Vec<_>>();
+            pipes_x.sort_by(|a, b| a.cmp(b));
+
+            if pipes_x.len() % 2 != 0 {
+                // remove middle element
+                let middle = pipes_x.len() / 2;
+                dbg!(pipes_x[middle]);
+                // pipes_x.insert(middle, pipes_x[middle]);
             }
 
-            let mut pipes_x = pipes_in_row.iter().map(|(x, _)| *x).collect::<Vec<_>>();
-
-            pipes_x.sort();
-            // dbg!(&pipes_x);
+            dbg!(&pipes_x);
 
             for pair in pipes_x.chunks(2) {
+                println!("subtracted {} from {}", pair[0], pair[1]);
                 area += pair[1] as u32 - pair[0] as u32 - 1;
             }
         }
